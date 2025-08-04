@@ -2,20 +2,24 @@ import streamlit as st
 import random
 import requests
 from xml.etree import ElementTree
-from transformers import pipeline
 from io import BytesIO
 from docx import Document
 
 PUBMED_API_KEY = "47c558837273db73214cd0778f0ff099c908"
+HUGGINGFACE_SUMMARY_API = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
 
 st.title("Medical Research Prompt Bot - End-to-End Research Assistant")
 
-@st.cache_resource
-
-def load_summarizer():
-    return pipeline("summarization", model="facebook/bart-large-cnn")
-
-summarizer = load_summarizer()
+# Summarization using HuggingFace Inference API
+def summarize_text(text):
+    headers = {"Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"}
+    payload = {"inputs": text, "options": {"min_length": 50, "max_length": 100}}
+    response = requests.post(HUGGINGFACE_SUMMARY_API, headers=headers, json=payload)
+    if response.status_code == 200:
+        summary = response.json()[0]['summary_text']
+        return summary
+    else:
+        return "Summarization failed."
 
 # Research Question Generator
 def generate_research_question():
@@ -30,7 +34,6 @@ def generate_research_question():
     question = f"What is the efficacy of {intervention} in {population} regarding {outcome}?"
     return population, intervention, "Placebo or standard care", outcome, question
 
-# Input Fields
 if st.button("Generate Random Research Question"):
     population, intervention, comparison, outcome, research_topic = generate_research_question()
     st.session_state["population"] = population
@@ -120,7 +123,7 @@ def generate_docx_report(prompt, articles):
         if article['doi']:
             doc.add_paragraph(f"DOI: https://doi.org/{article['doi']}")
         if article['abstract'] != "No Abstract":
-            summary = summarizer(article['abstract'], max_length=100, min_length=50, do_sample=False)[0]['summary_text']
+            summary = summarize_text(article['abstract'])
             doc.add_paragraph(f"Summary: {summary}")
     buffer = BytesIO()
     doc.save(buffer)
@@ -169,9 +172,8 @@ Optional: If applicable, suggest potential future research directions.
             if article['doi']:
                 st.markdown(f"[Link to Article](https://doi.org/{article['doi']})")
 
-            # Summarize Abstract
             if article['abstract'] != "No Abstract":
-                summary = summarizer(article['abstract'], max_length=100, min_length=50, do_sample=False)[0]['summary_text']
+                summary = summarize_text(article['abstract'])
                 st.markdown(f"**Summary:** {summary}")
 
             st.markdown("---")
@@ -183,7 +185,6 @@ Optional: If applicable, suggest potential future research directions.
             file_name="Research_Prompt_Report.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
-
     else:
         st.write("No articles found.")
 
