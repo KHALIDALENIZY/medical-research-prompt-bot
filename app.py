@@ -1,12 +1,35 @@
 import streamlit as st
+import random
 
 st.title("Medical Research Prompt Generator")
 
-research_topic = st.text_input("Research Topic", "Efficacy of SGLT2 inhibitors in CKD patients to reduce cardiovascular mortality")
-population = st.text_input("Population (P)", "Adult diabetic patients with CKD stages 3-4")
-intervention = st.text_input("Intervention (I)", "SGLT2 inhibitors")
-comparison = st.text_input("Comparison (C)", "Placebo or other antidiabetic agents")
-outcome = st.text_input("Outcome (O)", "Cardiovascular mortality, hospitalization, CKD progression")
+# Research Question Generator
+def generate_research_question():
+    conditions = ["chronic kidney disease", "heart failure", "diabetes mellitus", "hypertension", "sepsis"]
+    interventions = ["SGLT2 inhibitors", "ACE inhibitors", "beta-blockers", "early goal-directed therapy", "continuous renal replacement therapy"]
+    outcomes = ["mortality reduction", "hospitalization rates", "renal function preservation", "cardiac remodeling", "infection control"]
+
+    population = f"Patients with {random.choice(conditions)}"
+    intervention = random.choice(interventions)
+    outcome = random.choice(outcomes)
+
+    question = f"What is the efficacy of {intervention} in {population} regarding {outcome}?"
+    return population, intervention, "Placebo or standard care", outcome, question
+
+if st.button("Generate Random Research Question"):
+    population, intervention, comparison, outcome, research_topic = generate_research_question()
+    st.session_state["population"] = population
+    st.session_state["intervention"] = intervention
+    st.session_state["comparison"] = comparison
+    st.session_state["outcome"] = outcome
+    st.session_state["research_topic"] = research_topic
+
+# Input Fields
+research_topic = st.text_input("Research Topic", st.session_state.get("research_topic", ""))
+population = st.text_input("Population (P)", st.session_state.get("population", ""))
+intervention = st.text_input("Intervention (I)", st.session_state.get("intervention", ""))
+comparison = st.text_input("Comparison (C)", st.session_state.get("comparison", ""))
+outcome = st.text_input("Outcome (O)", st.session_state.get("outcome", ""))
 study_types = st.multiselect("Study Types", ["systematic reviews", "meta-analyses", "RCTs"], default=["systematic reviews", "meta-analyses", "RCTs"])
 publication_year_limit = st.slider("Publication Year Limit (years)", 1, 10, 5)
 preferred_sources = st.multiselect("Preferred Sources", ["PubMed", "Cochrane Library", "Guidelines"], default=["PubMed", "Cochrane Library", "Guidelines"])
