@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 st.title("Medical Research Prompt Generator")
@@ -13,7 +12,20 @@ publication_year_limit = st.slider("Publication Year Limit (years)", 1, 10, 5)
 preferred_sources = st.multiselect("Preferred Sources", ["PubMed", "Cochrane Library", "Guidelines"], default=["PubMed", "Cochrane Library", "Guidelines"])
 output_format = st.selectbox("Output Format", ["bullet points", "detailed report", "table"])
 
-if st.button("Generate Prompt"):
+# Generate PubMed Search Query
+def generate_pubmed_query(population, intervention, comparison, outcome):
+    query_parts = []
+    if population:
+        query_parts.append(f"({population})")
+    if intervention:
+        query_parts.append(f"({intervention})")
+    if comparison:
+        query_parts.append(f"({comparison})")
+    if outcome:
+        query_parts.append(f"({outcome})")
+    return " AND ".join(query_parts)
+
+if st.button("Generate Prompt & PubMed Query"):
     prompt = f"""
 Act as a clinical researcher specialized in evidence-based medicine. I need you to conduct a structured literature review on the following topic:
 
@@ -36,7 +48,13 @@ Use the PICO framework:
 Optional: If applicable, suggest potential future research directions.
 """
 
-    st.text_area("Generated Prompt", prompt, height=400)
+    pubmed_query = generate_pubmed_query(population, intervention, comparison, outcome)
+
+    st.subheader("Generated Research Prompt")
+    st.text_area("Prompt", prompt, height=400)
+
+    st.subheader("Generated PubMed Search Query")
+    st.code(pubmed_query, language="text")
 
 st.markdown("---")
 st.markdown("Developed by Khalid Al — Medical Research Prompt Bot")
